@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackMate</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="icon" href="imgs/logo-removebg-preview.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body >
+    <header class="px-14">
+
+        <div class="flex space-x-[1300px] p-4">
+            <div class="flex space-x-2"> 
+                <img src="imgs/logo.png" class="w-6" alt="">
+                 <h3 class="font-[poppins]"><span class="text-[#F0A07D] font-semibold">T</span >rack<span class="text-[#F0A07D] font-semibold">M</span>ate</h3>
+
+            </div>
+
+            <div class="text-gray-500 font-[poppins]" >
+                <ul class="flex space-x-9 font-medium">
+                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
+                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
+                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
+                    <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a href="">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <section class="p-2.5">
+        <div class="flex gap-54 p-4">
+<div class="m-5 p-10 space-y-8">
+    <h1 class="text-[80px]  font-semibold font-[poppins] w-[560px]">Welcome<br>To<span class="text-orange-300">TrackMate</span></h1>
+    <p class="text-[15px] font-[poppins] w-[500px]"><span class="font-semibold text-lg">TrackMate</span> allows you to <span class="text-[#F4A69D] font-bold text-xl ">save</span>, 
+      <span class="text-[#3EAC60] font-bold text-xl">secure</span>, and <span class="text-[#54BEC7] font-bold text-xl">visualize</span> student notes and data effortlessly. Stay organized, 
+        track progress, and gain valuable insights — all in one place. Empower your learning journey with a reliable and user-friendly platform designed to help you succeed</p>
+    <img src="imgs/progressBar.png" alt="" class="w-[600px]">
+    <button class="w-64 h-16 bg-orange-300 text-white rounded-xl text-[25px] font-medium hover:scale-105 transition-transform duration-200 hover:bg-orange-400">Register Now</button>
+</div>
+<div>
+    <img src="imgs/mainPageImg.png" alt="" class="w-[1300px]">
+</div>
+        </div>
+    </section>
+    <section class="py-12 bg-[#F0A07D]">
+        <div class="max-w-6xl mx-auto px-4">
+          <h2 class="text-7xl font-bold text-center mb-8 p-5 text-white font-[poppins]">Our Courses</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card 1 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+              <h3 class="text-xl font-semibold mb-2">Student Management</h3>
+              <p class="text-gray-600">Easily add, edit, and remove student records with a few clicks.</p>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+              <h3 class="text-xl font-semibold mb-2">Course Management</h3>
+              <p class="text-gray-600">Create and organize courses efficiently for better learning outcomes.</p>
+            </div>
+      
+            <!-- Card 3 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+              <h3 class="text-xl font-semibold mb-2">Grade Tracking</h3>
+              <p class="text-gray-600">Monitor student performance and generate detailed reports.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="bg-gray-100 py-16">
+        <div class="container mx-auto text-center">
+          <h2 class="text-3xl font-bold mb-4">About TrackMate</h2>
+          <p class="text-lg mb-6">
+            TrackMate is a comprehensive student management system designed to help educational institutions keep track of their students' progress, manage schedules, and improve communication between students, teachers, and administrators.
+          </p>
+          
+          <!-- Social Media Links -->
+          <div class="mb-6">
+            <h3 class="text-2xl font-semibold mb-4">Follow Us</h3>
+            <div class="flex justify-center space-x-4">
+              <a href="https://facebook.com/trackmate" target="_blank" class="text-blue-600">
+                <i class="fab fa-facebook-f"></i> Facebook
+              </a>
+              <a href="https://twitter.com/trackmate" target="_blank" class="text-blue-400">
+                <i class="fab fa-twitter"></i> Twitter
+              </a>
+              <a href="https://instagram.com/trackmate" target="_blank" class="text-pink-600">
+                <i class="fab fa-instagram"></i> Instagram
+              </a>
+              <a href="https://linkedin.com/company/trackmate" target="_blank" class="text-blue-700">
+                <i class="fab fa-linkedin-in"></i> LinkedIn
+              </a>
+            </div>
+          </div>
+      <div class="">
+          <!-- Map Section -->
+          
+      
+          <!-- Contact Section (Vertical Layout) -->
+          <div class="max-w-screen-lg mx-auto ">
+            <!-- Contact Form -->
+            <div class="bg-white p-8 shadow-md rounded-4xl mb-8">
+              <h3 class="text-2xl font-semibold mb-4">Contact Us</h3>
+              <p class="text-lg mb-6">We'd love to hear from you! Reach out to us with any questions or feedback.</p>
+              <form action="#" method="POST">
+                <div class="mb-4">
+                  <label for="name" class="block text-left text-lg">Full Name</label>
+                  <input type="text" id="name" name="name" class="w-full p-4 border-2 border-gray-300 rounded-lg" required>
+                </div>
+                <div class="mb-4">
+                  <label for="email" class="block text-left text-lg">Email</label>
+                  <input type="email" id="email" name="email" class="w-full p-4 border-2 border-gray-300 rounded-lg" required>
+                </div>
+                <div class="mb-4">
+                  <label for="message" class="block text-left text-lg">Message</label>
+                  <textarea id="message" name="message" class="w-full p-4 border-2 border-gray-300 rounded-lg" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">Send Message</button>
+              </form>
+            </div>
+        </div>
+            <!-- Additional Contact Info -->
+            <div class=" p-8  rounded-lg">
+              <h3 class="text-2xl font-semibold mb-4">Other Ways to Reach Us</h3>
+              <p class="text-lg mb-4">You can also reach us via:</p>
+              <div class="flex flex-col space-y-4">
+                <a href="mailto:support@trackmate.com" class="text-blue-600">Email: support@trackmate.com</a>
+                <a href="tel:+1234567890" class="text-blue-600">Phone: +123-456-7890</a>
+              </div>
+            </div>
+          </div>
+      
+          <!-- Credits -->
+          <div class="mt-6 text-sm">
+            <p>© 2025 TrackMate. All rights reserved.</p>
+            <p>Design and Development by <a href="https://yourportfolio.com" target="_blank" class="text-blue-600">Your Name</a>.</p>
+          </div>
+        </div>
+      </section>
+      
+      
+</body>
+</html>
