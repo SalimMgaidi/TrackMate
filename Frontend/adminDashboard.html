@@ -82,15 +82,34 @@
             </div>
         </section>
          <!-- Students Section -->
-         <section id="subjects" class="mb-10">
+         <section id="students" class="mb-10">
             <h2 class="text-2xl font-bold mb-5">Manage Students</h2>
+            <div class="fflex gap-4">
+            <input type="number" id="searchInput" placeholder="Search by ID" class="p-2 border rounded-xl mb-3">
+            <button id="searchBtn" class="bg-green-200 w-20 h-8  rounded-xl">Search</button>
+        </div>
+            <!-- Add Student Button -->
             <div class="flex gap-4 mb-5">
-                <button class="bg-[#F0A07D] text-white px-5 py-3 rounded-lg">Add Student</button>
-                <button class="bg-yellow-500 text-white px-5 py-3 rounded-lg">Update Student</button>
-                <button class="bg-red-500 text-white px-5 py-3 rounded-lg">Delete Student</button>
+                <button id="asb" class="bg-[#F0A07D] text-white px-5 py-3 rounded-lg">Add Student</button>
+            </div>
+        
+            <!-- Students Table -->
+            <div class="bg-white p-5 rounded-lg shadow-lg overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="p-3 border">ID</th>
+                            <th class="p-3 border">Name</th>
+                            <th class="p-3 border">Email</th>
+                            <th class="p-3 border">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
             </div>
         </section>
-
 
         <!-- Subjects Section -->
         <section id="subjects" class="mb-10">
@@ -112,5 +131,6 @@
             </div>
         </section>
     </main>
+    <script src="functions.js"></script>
 </body>
 </html>

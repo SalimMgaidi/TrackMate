@@ -10,25 +10,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body >
-    <header class="px-14">
-
-        <div class="flex space-x-[1300px] p-4">
-            <div class="flex space-x-2"> 
-                <img src="imgs/logo.png" class="w-6" alt="">
-                 <h3 class="font-[poppins]"><span class="text-[#F0A07D] font-semibold">T</span >rack<span class="text-[#F0A07D] font-semibold">M</span>ate</h3>
-
-            </div>
-
-            <div class="text-gray-500 font-[poppins]" >
-                <ul class="flex space-x-9 font-medium">
-                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
-                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
-                    <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
-                    <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a href="">Login</a></li>
-                </ul>
-            </div>
+  <header class="px-14 fixed top-0 left-0 w-full z-10 bg-white shadow-sm shadow-[#f0f0f0] transition-all duration-300" id="header">
+    <div class="flex space-x-[1300px] p-4">
+        <div class="flex space-x-2">
+            <img src="imgs/logo.png" class="w-6" alt="">
+            <h3 class="font-[poppins]"><span class="text-[#F0A07D] font-semibold">T</span>rack<span class="text-[#F0A07D] font-semibold">M</span>ate</h3>
         </div>
-    </header>
+
+        <div class="text-gray-500 font-[poppins]">
+            <ul class="flex space-x-9 font-medium">
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
+                <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a href="">Login</a></li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<!-- Add some content below for scroll effect -->
+<div class="pt-[100px]"> <!-- Adjust this padding to ensure content is not hidden behind header -->
+    <!-- Add your content here -->
+</div>
 
     <section class="p-2.5">
         <div class="flex gap-54 p-4">
@@ -68,19 +71,26 @@
             </div>
           </div>
         </div>
+        <div class="flex justify-center">
+          <a href="#" class="text-blue-50 text-center p-5 hover:text-white hover:scale-95 duration-300">View More ></a>
+      </div>
+      
       </section>
-
-      <section id="about" class="bg-gray-100 py-16">
-        <div class="container mx-auto text-center">
-          <h2 class="text-3xl font-bold mb-4">About TrackMate</h2>
-          <p class="text-lg mb-6">
-            TrackMate is a comprehensive student management system designed to help educational institutions keep track of their students' progress, manage schedules, and improve communication between students, teachers, and administrators.
-          </p>
-          
+      <section class="flex flex-col md:flex-row items-center justify-center gap-8 p-24">
+        <!-- About Section -->
+        <div id="about" class=" p-8 rounded-lg w-full md:w-1/2">
+          <div class="text-center">
+            <h2 class=" font-bold   text-[#FFB86A] text-[90px]">About TrackMate</h2>
+            <p class="text-lg mb-6 ">
+              TrackMate is a comprehensive student management system designed to help educational institutions keep track of their students'
+              progress, manage schedules, and improve communication between students, teachers, and administrators.
+            </p>
+          </div>
+      
           <!-- Social Media Links -->
-          <div class="mb-6">
-            <h3 class="text-2xl font-semibold mb-4">Follow Us</h3>
-            <div class="flex justify-center space-x-4">
+          <div class=" bg-[#B6EE56] w-[500px] rounded-full ml-32">
+            <h3 class="text-[30px] font-semibold  font-[poppins] text-center   text-white">Follow Us</h3>
+            <div class="flex justify-center space-x-4 p-5">
               <a href="https://facebook.com/trackmate" target="_blank" class="text-blue-600">
                 <i class="fab fa-facebook-f"></i> Facebook
               </a>
@@ -95,51 +105,54 @@
               </a>
             </div>
           </div>
-      <div class="">
-          <!-- Map Section -->
-          
-      
-          <!-- Contact Section (Vertical Layout) -->
-          <div class="max-w-screen-lg mx-auto ">
-            <!-- Contact Form -->
-            <div class="bg-white p-8 shadow-md rounded-4xl mb-8">
-              <h3 class="text-2xl font-semibold mb-4">Contact Us</h3>
-              <p class="text-lg mb-6">We'd love to hear from you! Reach out to us with any questions or feedback.</p>
-              <form action="#" method="POST">
-                <div class="mb-4">
-                  <label for="name" class="block text-left text-lg">Full Name</label>
-                  <input type="text" id="name" name="name" class="w-full p-4 border-2 border-gray-300 rounded-lg" required>
-                </div>
-                <div class="mb-4">
-                  <label for="email" class="block text-left text-lg">Email</label>
-                  <input type="email" id="email" name="email" class="w-full p-4 border-2 border-gray-300 rounded-lg" required>
-                </div>
-                <div class="mb-4">
-                  <label for="message" class="block text-left text-lg">Message</label>
-                  <textarea id="message" name="message" class="w-full p-4 border-2 border-gray-300 rounded-lg" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700">Send Message</button>
-              </form>
-            </div>
         </div>
+
+ 
+  <!-- Compact Contact Section -->
+<div class="bg-[#F0A07D] p-3 rounded-4xl  font-[Poppins] text-xs h-[400px]  w-[400px] ">
+  <h3 class="text-[42px] p-10 font-semibold mb-2 text-center text-white">Contact Us</h3>
+  <p class="text-xs mb-3 text-center text-[12px] text-white">
+    Reach out to us with any questions or feedback.
+  </p>
+  <form action="#" method="POST">
+    <div class="mb-2">
+      <label for="name" class="block text-white text-left text-xs">Name</label>
+      <input type="text" id="name" name="name" class="w-full p-1 border border-white bg-transparent text-white rounded-sm text-xs" required>
+    </div>
+    <div class="mb-2">
+      <label for="email" class="block text-white text-left text-xs">Email</label>
+      <input type="email" id="email" name="email" class="w-full p-1 border border-white bg-transparent text-white rounded-sm text-xs" required>
+    </div>
+    <div class="mb-2">
+      <label for="message" class="block text-white text-left text-xs">Message</label>
+      <textarea id="message" name="message" class="w-full p-1 border border-white bg-transparent text-white rounded-sm text-xs" rows="2" required></textarea>
+    </div>
+    <button type="submit" class="bg-[#e27367] rounded-3xl text-white py-1 px-3  hover:bg-[#ffaca3] w-full text-xs">
+      Send
+    </button>
+  </form>
+</div>
+
+
+      
             <!-- Additional Contact Info -->
-            <div class=" p-8  rounded-lg">
-              <h3 class="text-2xl font-semibold mb-4">Other Ways to Reach Us</h3>
-              <p class="text-lg mb-4">You can also reach us via:</p>
-              <div class="flex flex-col space-y-4">
+            <div class=" p-8  rounded-4xl bg-[#B8E2F8]">
+              <h3 class=" font-semibold mb-4 text-[45px] font-[poppins] text-center p-10 w-[400px]">Other Ways to Reach Us</h3>
+              <p class="text-lg mb-4 text-center">You can also reach us via:</p>
+              <div class="flex flex-col space-y-4 text-center">
                 <a href="mailto:support@trackmate.com" class="text-blue-600">Email: support@trackmate.com</a>
                 <a href="tel:+1234567890" class="text-blue-600">Phone: +123-456-7890</a>
               </div>
             </div>
-          </div>
-      
+          
+          </section>
           <!-- Credits -->
-          <div class="mt-6 text-sm">
+          <div class="mt-6 text-sm text-center">
             <p>© 2025 TrackMate. All rights reserved.</p>
             <p>Design and Development by <a href="https://yourportfolio.com" target="_blank" class="text-blue-600">Your Name</a>.</p>
           </div>
-        </div>
-      </section>
+       
+      
       
       
 </body>
