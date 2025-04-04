@@ -22,7 +22,7 @@
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
-                <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a href="">Login</a></li>
+                <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a target="_blank" href="login.html">Login</a></li>
             </ul>
         </div>
     </div>
@@ -48,33 +48,64 @@
 </div>
         </div>
     </section>
+    
     <section class="py-12 bg-[#F0A07D]">
-        <div class="max-w-6xl mx-auto px-4">
-          <h2 class="text-7xl font-bold text-center mb-8 p-5 text-white font-[poppins]">Our Courses</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    
+        <div class="max-w-6xl mx-auto px-1">
+          <h2 class="text-7xl font-bold text-center mb-0.5  text-white font-[poppins] pt-5">Courses</h2>
+          <p class="text-white font-[poppins] text-[15px] text-center p-8"><br><span class=" text-[45px] font-semibold">TrackMate is here to guide you every step of the way!</span> </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Card 1 -->
-            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-              <h3 class="text-xl font-semibold mb-2">Student Management</h3>
-              <p class="text-gray-600">Easily add, edit, and remove student records with a few clicks.</p>
-            </div>
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition hover:scale-105 duration-700">
+              <h3 class="text-[22px] text-center font-semibold text-gray-900 p-5">Data Structures & Algorithms</h3>
+              <img src="imgs/datastructure.jpg" alt="" class=" ">
+              <p class="text-gray-600 mt-2 text-[12px]">Learn about arrays, linked lists, stacks, queues, trees, and graphs along with sorting and searching algorithms.</p>
+              <div class="mt-4">
+                  <span class="text-sm text-black">Level of Hardness: <strong>⭐⭐⭐⭐</strong></span>
+              </div>
+              <p class="mt-2 text-sm text-gray-500">Perfect for competitive programming and technical interviews.</p>
+              <button class="mt-4 w-full bg-[#9CB9E1] text-white font-semibold py-2 rounded-lg hover:bg-[#7A9CC9] transition duration-300">
+                Enroll Now
+            </button>
+          </div>
             
             <!-- Card 2 -->
-            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-              <h3 class="text-xl font-semibold mb-2">Course Management</h3>
-              <p class="text-gray-600">Create and organize courses efficiently for better learning outcomes.</p>
-            </div>
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition hover:scale-105 duration-700">
+              <h3 class="text-[22px] text-center font-semibold text-gray-900 p-5">Database Management Systems </h3>
+              <img src="imgs//db.jpg" alt="" class=" w-[260px] m-auto">
+              <p class="text-gray-600 mt-2 text-[12px]">Students learn about relational databases, SQL, normalization, indexing, and transactions. 
+               </p>
+              <div class="mt-4">
+                  <span class="text-sm text-black">Level of Hardness: <strong>⭐⭐⭐</strong></span>
+              </div>
+              <p class="mt-2 text-sm text-gray-500">Basic understanding of programming and data storage concepts.</p>
+              <button class="mt-4 w-full bg-[#EE7500] text-white font-semibold py-2 rounded-lg hover:bg-[#a3652b] transition duration-300">
+                Enroll Now
+            </button>
+              
+          </div>
       
             <!-- Card 3 -->
-            <div class="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-              <h3 class="text-xl font-semibold mb-2">Grade Tracking</h3>
-              <p class="text-gray-600">Monitor student performance and generate detailed reports.</p>
-            </div>
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition hover:scale-105 duration-700 ">
+              <h3 class="text-[22px] text-center font-semibold text-gray-900 p-5">Machine Learning Basicss</h3>
+              <img src="imgs/ml.jpg" alt="" class=" m-auto w-[270px] ">
+              <p class="text-gray-600 mt-2 text-[12px]">Introduction to supervised and unsupervised learning, regression, classification, and neural networks. 
+                </p>
+              <div class="mt-4">
+                  <span class="text-sm text-black">Level of Hardness: <strong>⭐⭐⭐⭐⭐</strong></span>
+              </div>
+              <p class="mt-2 text-sm text-gray-500">Knowledge of Python, statistics, and linear algebra.
+
+              </p>
+              <button class="mt-4 w-full bg-[#F04F5F] text-white font-semibold py-2 rounded-lg hover:bg-[#9c323d] transition duration-300">
+                Enroll Now
+            </button>
           </div>
         </div>
-        <div class="flex justify-center">
-          <a href="#" class="text-blue-50 text-center p-5 hover:text-white hover:scale-95 duration-300">View More ></a>
+        <div class="flex justify-center p-5">
+          <a href="#" class="text-[#fdfdfd] text-center p-8 font-[poppins] hover:underline  hover:text-[#fff]">View More ></a>
       </div>
-      
+    
       </section>
       <section class="flex flex-col md:flex-row items-center justify-center gap-8 p-24">
         <!-- About Section -->
@@ -88,7 +119,7 @@
           </div>
       
           <!-- Social Media Links -->
-          <div class=" bg-[#B6EE56] w-[500px] rounded-full ml-32">
+          <div class=" bg-[#F7B305] w-[500px] rounded-full ml-32">
             <h3 class="text-[30px] font-semibold  font-[poppins] text-center   text-white">Follow Us</h3>
             <div class="flex justify-center space-x-4 p-5">
               <a href="https://facebook.com/trackmate" target="_blank" class="text-blue-600">
@@ -149,7 +180,7 @@
           <!-- Credits -->
           <div class="mt-6 text-sm text-center">
             <p>© 2025 TrackMate. All rights reserved.</p>
-            <p>Design and Development by <a href="https://yourportfolio.com" target="_blank" class="text-blue-600">Your Name</a>.</p>
+            
           </div>
        
       
