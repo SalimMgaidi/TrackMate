@@ -1,3 +1,16 @@
+
+<?php if (isset($_GET['error'])): ?>
+    <script>
+        <?php if ($_GET['error'] == 'invalid_password'): ?>
+            alert("❌ Incorrect password.");
+        <?php elseif ($_GET['error'] == 'no_user'): ?>
+            alert("❌ No user found with this email.");
+        <?php elseif ($_GET['error'] == 'unknown_role'): ?>
+            alert("❌ Unknown role. Please contact admin.");
+        <?php endif; ?>
+    </script>
+<?php endif; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -233,7 +246,7 @@
 
             <div class="text-center text-sm mt-4">
                 <p class="text-gray-600">Already have an account? 
-                    <a href="login.html" class="text-[#F0A07D] font-semibold hover:underline">Login here</a>
+                    <a href="login.php" class="text-[#F0A07D] font-semibold hover:underline">Login here</a>
                 </p>
             </div>
         </div>

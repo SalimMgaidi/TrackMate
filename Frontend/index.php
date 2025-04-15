@@ -23,7 +23,7 @@
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
-                <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a target="_blank" href="login.html">Login</a></li>
+                <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a target="_blank" href="login.php">Login</a></li>
             </ul>
         </div>
     </div>
@@ -38,8 +38,8 @@
         <div class="flex gap-54 p-4">
 <div class="m-5 p-10 space-y-8">
     <h1 class="text-[80px]  font-semibold font-[poppins] w-[560px]">Welcome<br>To<span class="text-orange-300">TrackMate</span></h1>
-    <p class="text-[15px] font-[poppins] w-[500px]"><span class="font-semibold text-lg">TrackMate</span> allows you to <span class="text-[#F4A69D] font-bold text-xl ">save</span>, 
-      <span class="text-[#3EAC60] font-bold text-xl">secure</span>, and <span class="text-[#54BEC7] font-bold text-xl">visualize</span> student notes and data effortlessly. Stay organized, 
+    <p class="text-[15px] font-[poppins] w-[500px]"><span class="font-semibold text-lg">TrackMate</span> allows you to <span class="text-[#F4A69D] font-bold text-xl hover:text-[#f17466] ">save</span>, 
+      <span class="text-[#3EAC60] font-bold text-xl hover:text-[#4be77c] ">secure</span>, and <span class="text-[#54BEC7] font-bold text-xl hover:text-[#40d6e4]">visualize</span> student notes and data effortlessly. Stay organized, 
         track progress, and gain valuable insights — all in one place. Empower your learning journey with a reliable and user-friendly platform designed to help you succeed</p>
     <img src="imgs/progressBar.png" alt="" class="w-[600px]">
     <button class="w-64 h-16 bg-orange-300 text-white rounded-xl text-[25px] font-medium hover:scale-105 transition-transform duration-200 hover:bg-orange-400">Register Now</button>

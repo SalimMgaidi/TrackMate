@@ -1,3 +1,16 @@
+
+<?php if (isset($_GET['error'])): ?>
+    <script>
+        <?php if ($_GET['error'] == 'invalid_password'): ?>
+            alert("❌ Incorrect password.");
+        <?php elseif ($_GET['error'] == 'no_user'): ?>
+            alert("❌ No user found with this email.");
+        <?php elseif ($_GET['error'] == 'unknown_role'): ?>
+            alert("❌ Unknown role. Please contact admin.");
+        <?php endif; ?>
+    </script>
+<?php endif; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,7 +84,7 @@
             </div>
 
             <!-- Login Form (initially hidden) -->
-            <form id="loginForm" class="hidden">
+            <form id="loginForm" class="hidden" method="post" action="../backend/redirect.php">
                 <!-- Email Input -->
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
@@ -80,6 +93,7 @@
                     <input 
                         type="email" 
                         id="email" 
+                        name="email" 
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F0A07D] focus:border-[#F0A07D] outline-none transition"
                         placeholder="Enter your email"
                         required>
@@ -91,6 +105,7 @@
                     <input 
                         type="password" 
                         id="password" 
+                        name="password"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F0A07D] focus:border-[#F0A07D] outline-none transition"
                         placeholder="Enter your password"
                         required>
@@ -117,9 +132,9 @@
             </form>
 
             <!-- Sign Up Link -->
-            <div class="text-center text-sm mt-4">
+            <div class="text-center text-sm mt-4" id="dontacc">
                 <p class="text-gray-600">Don't have an account? 
-                    <a href="registration.html" class="text-[#F0A07D] font-semibold hover:underline">Contact administrator</a>
+                    <a href="registration.php" class="text-[#F0A07D] font-semibold hover:underline">create an account</a>
                 </p>
             </div>
         </div>
@@ -137,6 +152,7 @@
         const loginForm = document.getElementById('loginForm');
         const emailLabel = document.getElementById('emailLabel');
         const loginAsText = document.getElementById('loginAsText');
+        const dontacc= document.getElementById("dontacc");
 
         function selectRole(role) {
             // Update UI
@@ -147,9 +163,11 @@
             if (role === 'student') {
                 emailLabel.textContent = 'Student';
                 loginAsText.textContent = 'Student';
+                dontacc.classList.remove("hidden");
             } else {
                 emailLabel.textContent = 'Admin';
                 loginAsText.textContent = 'Administrator';
+                dontacc.classList.add("hidden");
             }
             
             // Show login form
