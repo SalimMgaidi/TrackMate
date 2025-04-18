@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Fetch user
     $user = $stmt->fetch();
     echo "<pre>";
-    print_r($user); // 🔍 Show the whole user array
+    print_r($user); 
     echo "</pre>";
     
     
