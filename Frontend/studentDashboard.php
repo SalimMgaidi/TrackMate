@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['user']) || $_SESSION['role'] != 0) {
+    header('Location: login.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,8 +36,8 @@
     <div class="flex items-center gap-3 mb-8">
       <img id="profileImage" src="imgs/animated-profile-icon.png" alt="Profile" class="w-12 h-12 rounded-full hover:scale-110 duration-300 object-cover">
       <div>
-        <h3 class="text-base font-semibold">Student Name</h3>
-        <p class="text-xs text-gray-500">student@email.com</p>
+        <h3 class="text-base font-semibold"><?php echo htmlspecialchars($_SESSION['user']['nom']);?></h3>
+        <p class="text-xs text-gray-500"><?php echo htmlspecialchars($_SESSION['user']['email']); ?></p>
       </div>
     </div>
     <input type="file" accept="image/*" class="mb-5 w-full text-sm" onchange="uploadImage(event)">
@@ -60,11 +67,17 @@
       <div class="bg-white p-6 rounded-xl shadow-md flex gap-6">
         <img id="profilePreview" src="imgs/animated-profile-icon.png" alt="Profile" class="w-28 h-28 rounded-full object-cover">
         <div class="grid grid-cols-2 gap-4 w-full">
-          <div><h3 class="font-medium">Full Name</h3><p class="text-gray-600">-</p></div>
-          <div><h3 class="font-medium">Student ID</h3><p class="text-gray-600">-</p></div>
-          <div><h3 class="font-medium">Email</h3><p class="text-gray-600">-</p></div>
-          <div><h3 class="font-medium">Class</h3><p class="text-gray-600">-</p></div>
-          <div><h3 class="font-medium">Enrollment Date</h3><p class="text-gray-600">-</p></div>
+          <div><h3 class="font-medium">Full Name</h3><p class="text-gray-600"><?php echo htmlspecialchars($_SESSION['user']['nom'] ?? '-'); ?></p></div>
+          <div><h3 class="font-medium">Student ID</h3><p class="text-gray-600"><?php echo htmlspecialchars($_SESSION['student_info']['cin'] ?? '-'); ?></p></div>
+          <div><h3 class="font-medium">Email</h3><p class="text-gray-600"><?php echo htmlspecialchars($_SESSION['user']['email'] ?? '-'); ?></p></div>
+          <div><h3 class="font-medium">Class</h3><p class="text-gray-600"><?php echo htmlspecialchars($_SESSION['student_info']['nom_filiere'] ?? '-'); ?></p></div>
+          <div><h3 class="font-medium">Enrollment Date</h3><p class="text-gray-600"><?php 
+            if (isset($_SESSION['user']['created_at'])) {
+                echo htmlspecialchars(date('Y-m-d', strtotime($_SESSION['user']['created_at'])));
+            } else {
+                echo '-';
+            }
+            ?></p></div>
         </div>
       </div>
     </section>

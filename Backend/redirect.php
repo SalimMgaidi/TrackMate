@@ -14,10 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Fetch user
     $user = $stmt->fetch();
-    echo "<pre>";
-    print_r($user); 
-    echo "</pre>";
-    
+   
     
     if ($user) {
         // Replace with password_verify() if you use hashed passwords
