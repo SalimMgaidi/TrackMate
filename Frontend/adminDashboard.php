@@ -1,24 +1,26 @@
 <?php
 session_start();
 require('../Backend/connection.php');
+//stat
 $_SESSION["nbstudents"] = $pdo->query("SELECT COUNT(id) FROM utilisateur WHERE role_id = 0")->fetchColumn();
-$_SESSION["nbsubjects"] = $pdo->query("SELECT COUNT(id) FROM matieres  ")->fetchColumn();
+$_SESSION["nbsubjects"] = $pdo->query("SELECT COUNT(id) FROM matieres")->fetchColumn();
 $_SESSION["avggrade"] = $pdo->query("SELECT sum(note)/count(id) from notes")->fetchColumn();
+//bar
 $_SESSION["nbf2"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=2")->fetchColumn();
 $_SESSION["nbf6"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=6")->fetchColumn();
 $_SESSION["nbf7"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=7")->fetchColumn();
 $_SESSION["nbf3"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=3")->fetchColumn();
 $_SESSION["nbf1"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=1")->fetchColumn();
 $_SESSION["nbf5"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=5")->fetchColumn();
+//line
+$_SESSION["max_f2"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 2")->fetchColumn();
+$_SESSION["max_f6"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 6")->fetchColumn();
+$_SESSION["max_f7"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 7")->fetchColumn();
+$_SESSION["max_f3"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 3")->fetchColumn();
+$_SESSION["max_f1"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 1")->fetchColumn();
+$_SESSION["max_f5"] = $pdo->query("SELECT MAX(n.note) FROM notes n JOIN etudiant e ON n.etudiant_id = e.id WHERE e.filiere_id = 5")->fetchColumn();
 
 $gradeToEdit = null;
-
-
-
-
-
-
-
 
 //-------------------------------------------------------manage students-------------------------------------------------------------
 // Handle form submissions
@@ -48,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Handle delete action
-if (isset($_GET['deletegrade'])) {
-    $user_id = $_GET['deletegrade'];
+// Handle delete action for students
+if (isset($_GET['delete'])) {
+    $user_id = $_GET['delete'];
     
     // First delete from etudiant table
     $stmt = $pdo->prepare("DELETE FROM etudiant WHERE user_id = ?");
@@ -60,7 +62,7 @@ if (isset($_GET['deletegrade'])) {
     $stmt = $pdo->prepare("DELETE FROM utilisateur WHERE id = ?");
     $stmt->execute([$user_id]);
     
-    header("Location: adminDashboard.php#grades?success=deleted");
+    header("Location: adminDashboard.php#students?success=deleted");
     exit;
 }
 
@@ -91,47 +93,46 @@ if (isset($_GET['edit'])) {
 }
 //-------------------------------------------------------manage students-------------------------------------------------------------
 
-
 //-------------------------------------------------------manage subjects/grades-------------------------------------------------------------
 // Handle form submissions
-$gardeToEdit = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['addgrade'])) {
-        // Add new garde
-        $stmt = $pdo->prepare("INSERT INTO notes (etudiant_id ,matiere_id,note) VALUES (?, ?, ?)");
+        // Add new grade
+        $stmt = $pdo->prepare("INSERT INTO notes (etudiant_id, matiere_id, note) VALUES (?, ?, ?)");
         $stmt->execute([
             $_POST['studentid'],
             $_POST['subjectid'],
             $_POST['grade']
         ]);
         
-   
-       
-        
-        header("Location: adminDashboard.php?success=added");
+        header("Location: adminDashboard.php?success=grade_added#grades");
         exit;
-    }}
-    if (isset($_POST['editgrade'])) {
+    } elseif (isset($_POST['updategrade'])) {
+        // Update grade
         $stmt = $pdo->prepare("UPDATE notes SET etudiant_id = ?, matiere_id = ?, note = ? WHERE id = ?");
-        $stmt->execute([$_POST['studentid'], $_POST['subjectid'], $_POST['grade'], $_POST['gradeid']]);
+        $stmt->execute([
+            $_POST['studentid'],
+            $_POST['subjectid'],
+            $_POST['grade'],
+            $_POST['gradeid']
+        ]);
         header("Location: adminDashboard.php?success=grade_updated#grades");
         exit;
     }
+}
 
-
-// Handle delete action
+// Handle delete action for grades
 if (isset($_GET['deletegrade'])) {
     $grade_id = $_GET['deletegrade'];
 
     $stmt = $pdo->prepare("DELETE FROM notes WHERE id = ?");
     $stmt->execute([$grade_id]);
 
-    // Redirect with success message
     header("Location: adminDashboard.php?success=grade_deleted#grades");
     exit;
 }
-// Get all students with their filiere information
-$gardes=[];
+
+// Get all grades with related information
 $stmt = $pdo->query("
     SELECT 
         f.id AS fid,
@@ -153,42 +154,100 @@ $stmt = $pdo->query("
 ");
 $grades = $stmt->fetchAll();
 
+// Get all subjects for dropdown
+$subjects = $pdo->query("SELECT id, nom_matiere FROM matieres")->fetchAll();
 
-// Get specific student for editing
-
-if (isset($_GET['edit'])) {
+// Get specific grade for editing
+if (isset($_GET['editgrade'])) {
     $stmt = $pdo->prepare("
-        SELECT u.id as user_id, u.nom, u.email, u.sexe, e.id as etudiant_id, e.date_naissance, e.filiere_id, e.cin 
-        FROM utilisateur u
-        JOIN etudiant e ON u.id = e.user_id
-        WHERE u.id = ?
+        SELECT n.id as gradeid, n.etudiant_id as studentid, n.matiere_id as subjectid, n.note as grade
+        FROM notes n
+        WHERE n.id = ?
     ");
-    $stmt->execute([$_GET['edit']]);
-    $gardetToEdit = $stmt->fetch();
+    $stmt->execute([$_GET['editgrade']]);
+    $gradeToEdit = $stmt->fetch();
 }
 //-------------------------------------------------------manage subjects/grades-------------------------------------------------------------
+
+//-------------------------------------------------------manage timetable-------------------------------------------------------------
+// Handle timetable form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['add_timetable'])) {
+        // Add new timetable entry
+        $stmt = $pdo->prepare("INSERT INTO emploi_temps (filiere_id, matiere_id, jour, heure_debut, heure_fin, salle) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $_POST['filiere_id'],
+            $_POST['matiere_id'],
+            $_POST['jour'],
+            $_POST['heure_debut'],
+            $_POST['heure_fin'],
+            $_POST['salle']
+        ]);
+        
+        header("Location: adminDashboard.php?success=timetable_added#tb");
+        exit;
+    } elseif (isset($_POST['update_timetable'])) {
+        // Update timetable entry
+        $stmt = $pdo->prepare("UPDATE emploi_temps SET filiere_id = ?, matiere_id = ?, jour = ?, heure_debut = ?, heure_fin = ?, salle = ? WHERE id = ?");
+        $stmt->execute([
+            $_POST['filiere_id'],
+            $_POST['matiere_id'],
+            $_POST['jour'],
+            $_POST['heure_debut'],
+            $_POST['heure_fin'],
+            $_POST['salle'],
+            $_POST['timetable_id']
+        ]);
+        
+        header("Location: adminDashboard.php?success=timetable_updated#tb");
+        exit;
+    }
+}
+
+// Handle delete action for timetable
+if (isset($_GET['deletetimetable'])) {
+    $timetable_id = $_GET['deletetimetable'];
+
+    $stmt = $pdo->prepare("DELETE FROM emploi_temps WHERE id = ?");
+    $stmt->execute([$timetable_id]);
+
+    header("Location: adminDashboard.php?success=timetable_deleted#tb");
+    exit;
+}
+
+// Get timetable data
+$stmt = $pdo->query("
+    SELECT et.id, f.nom_filiere AS filiere, m.nom_matiere AS matiere, 
+    et.jour, et.heure_debut, et.heure_fin, et.salle, et.filiere_id, et.matiere_id
+    FROM emploi_temps et
+    JOIN filieres f ON et.filiere_id = f.id
+    JOIN matieres m ON et.matiere_id = m.id
+    ORDER BY et.jour, et.heure_debut
+");
+$emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get specific timetable entry for editing
+$timetableToEdit = null;
+if (isset($_GET['edittimetable'])) {
+    $stmt = $pdo->prepare("
+        SELECT et.id as timetable_id, et.filiere_id, et.matiere_id, et.jour, 
+        et.heure_debut, et.heure_fin, et.salle
+        FROM emploi_temps et
+        WHERE et.id = ?
+    ");
+    $stmt->execute([$_GET['edittimetable']]);
+    $timetableToEdit = $stmt->fetch();
+}
+//-------------------------------------------------------manage timetable-------------------------------------------------------------
+
 //-------------------------------------------------------logout-------------------------------------------------------------
 if (isset($_GET["logout"]) && $_GET["logout"] == "true") {
-    
     session_start();
     session_destroy(); 
     header("Location: index.php"); 
     exit(); 
 }
 //-------------------------------------------------------logout-------------------------------------------------------------
-//-------------------------------------------------------timetable-------------------------------------------------------------
-
-//  get emploi temps 
-$sql = "SELECT et.id, f.nom_filiere AS filiere, m.nom_matiere AS matiere, 
-et.jour, et.heure_debut, et.heure_fin, et.salle
-FROM emploi_temps et
-JOIN filieres f ON et.filiere_id = f.id
-JOIN matieres m ON et.matiere_id = m.id
-ORDER BY et.jour, et.heure_debut";
-
-$stmt = $pdo->query($sql);
-$emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-//-------------------------------------------------------timetable-------------------------------------------------------------
 ?>
 
 <!DOCTYPE html>
@@ -208,7 +267,7 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="flex items-center gap-3 mb-5">
             <img src="imgs/animated-profile-icon.png" alt="Profile" class="w-12 h-12 rounded-full hover:scale-110 duration-500">
             <div>
-                <h3 class="text-lg font-bold"> <?php echo $_SESSION["user"]["nom"] ?></h3>
+                <h3 class="text-lg font-bold"><?php echo $_SESSION["user"]["nom"] ?></h3>
                 <p class="text-[12px]"><?php echo $_SESSION["user"]["email"] ?></p>
             </div>
         </div>
@@ -284,7 +343,7 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </header>
 
         <!-- Statistics Section -->
-        <section  class="mb-10">
+        <section class="mb-10">
             <h2 class="text-2xl font-bold mb-5">Statistics</h2>
             <div class="grid grid-cols-3 gap-4 mb-8">
                 <div class="bg-white p-5 rounded-lg shadow-lg">
@@ -306,14 +365,13 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <canvas id="linechart" width="300" height="200"></canvas>
                 </div>
                 <div class="bg-white p-5 rounded-lg shadow-lg">
-                    <h3 class="text-xl font-bold">Grade Distribution5</h3>
+                    <h3 class="text-xl font-bold">Grade Distribution</h3>
                     <canvas id="barchart" width="300" height="150"></canvas>
                 </div>
-                
             </div>
         </section>
 
-        <!-- Students Section -->
+        <!-- Success Messages -->
         <?php if (isset($_GET['success'])): ?>
             <div class="bg-[#F0A07D] text-white p-3 rounded mb-4">
                 <?php 
@@ -321,319 +379,411 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     case 'added': echo "Student added successfully!"; break;
                     case 'updated': echo "Student updated successfully!"; break;
                     case 'deleted': echo "Student deleted successfully!"; break;
+                    case 'grade_added': echo "Grade added successfully!"; break;
+                    case 'grade_updated': echo "Grade updated successfully!"; break;
+                    case 'grade_deleted': echo "Grade deleted successfully!"; break;
+                    case 'timetable_added': echo "Timetable entry added successfully!"; break;
+                    case 'timetable_updated': echo "Timetable entry updated successfully!"; break;
+                    case 'timetable_deleted': echo "Timetable entry deleted successfully!"; break;
                 }
                 ?>
             </div>
         <?php endif; ?>
         
-<section id="students">
-    <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage students</h1>
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
-                <?= $studentToEdit ? 'Edit Student' : 'Add New Student' ?>
-            </h2>
-            
-            <form method="POST" class="space-y-4">
-                <?php if ($studentToEdit): ?>
-                    <input type="hidden" name="user_id" value="<?= $studentToEdit['user_id'] ?>">
-                <?php endif; ?>
+        <!-- Students Section -->
+        <section id="students">
+            <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage students</h1>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
+                    <?= $studentToEdit ? 'Edit Student' : 'Add New Student' ?>
+                </h2>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label for="nom" class="block text-sm font-medium text-gray-700">Full Name:</label>
-                        <input type="text" id="nom" name="nom" required 
-                               value="<?= $studentToEdit ? $studentToEdit['nom'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
-                        <input type="email" id="email" name="email" required 
-                               value="<?= $studentToEdit ? $studentToEdit['email'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    
-                    <?php if (!$studentToEdit): ?>
-                    <div class="space-y-2">
-                        <label for="mot_de_passe" class="block text-sm font-medium text-gray-700">Password:</label>
-                        <input type="password" id="mot_de_passe" name="mot_de_passe" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    <?php endif; ?>
-                    
-                    <div class="space-y-2">
-                        <label for="sexe" class="block text-sm font-medium text-gray-700">Gender:</label>
-                        <select id="sexe" name="sexe" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                            <option value="homme" <?= $studentToEdit && $studentToEdit['sexe'] == 'homme' ? 'selected' : '' ?>>Male</option>
-                            <option value="femme" <?= $studentToEdit && $studentToEdit['sexe'] == 'femme' ? 'selected' : '' ?>>Female</option>
-                        </select>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="date_naissance" class="block text-sm font-medium text-gray-700">Birth Date:</label>
-                        <input type="date" id="date_naissance" name="date_naissance" required 
-                               value="<?= $studentToEdit ? $studentToEdit['date_naissance'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="filiere_id" class="block text-sm font-medium text-gray-700">Program:</label>
-                        <select id="filiere_id" name="filiere_id" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                            <?php foreach ($filieres as $filiere): ?>
-                                <option value="<?= $filiere['id'] ?>" 
-                                    <?= $studentToEdit && $studentToEdit['filiere_id'] == $filiere['id'] ? 'selected' : '' ?>>
-                                    <?= $filiere['nom_filiere'] ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="cin" class="block text-sm font-medium text-gray-700">CIN:</label>
-                        <input type="text" id="cin" name="cin" required 
-                               value="<?= $studentToEdit ? $studentToEdit['cin'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4 pt-4">
+                <form method="POST" class="space-y-4">
                     <?php if ($studentToEdit): ?>
-                        <button type="submit" name="update" 
-                                class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
-                            Update Student
-                        </button>
-                        <a href="adminDashboard.php" 
-                           class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                            Cancel
-                        </a>
-                    <?php else: ?>
-                        <button type="submit" name="add" 
-                                class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
-                            Add Student
-                        </button>
+                        <input type="hidden" name="user_id" value="<?= $studentToEdit['user_id'] ?>">
                     <?php endif; ?>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="nom" class="block text-sm font-medium text-gray-700">Full Name:</label>
+                            <input type="text" id="nom" name="nom" required 
+                                   value="<?= $studentToEdit ? $studentToEdit['nom'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
+                            <input type="email" id="email" name="email" required 
+                                   value="<?= $studentToEdit ? $studentToEdit['email'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        
+                        <?php if (!$studentToEdit): ?>
+                        <div class="space-y-2">
+                            <label for="mot_de_passe" class="block text-sm font-medium text-gray-700">Password:</label>
+                            <input type="password" id="mot_de_passe" name="mot_de_passe" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="space-y-2">
+                            <label for="sexe" class="block text-sm font-medium text-gray-700">Gender:</label>
+                            <select id="sexe" name="sexe" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                <option value="homme" <?= $studentToEdit && $studentToEdit['sexe'] == 'homme' ? 'selected' : '' ?>>Male</option>
+                                <option value="femme" <?= $studentToEdit && $studentToEdit['sexe'] == 'femme' ? 'selected' : '' ?>>Female</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="date_naissance" class="block text-sm font-medium text-gray-700">Birth Date:</label>
+                            <input type="date" id="date_naissance" name="date_naissance" required 
+                                   value="<?= $studentToEdit ? $studentToEdit['date_naissance'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="filiere_id" class="block text-sm font-medium text-gray-700">Program:</label>
+                            <select id="filiere_id" name="filiere_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                <?php foreach ($filieres as $filiere): ?>
+                                    <option value="<?= $filiere['id'] ?>" 
+                                        <?= $studentToEdit && $studentToEdit['filiere_id'] == $filiere['id'] ? 'selected' : '' ?>>
+                                        <?= $filiere['nom_filiere'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="cin" class="block text-sm font-medium text-gray-700">CIN:</label>
+                            <input type="text" id="cin" name="cin" required 
+                                   value="<?= $studentToEdit ? $studentToEdit['cin'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 pt-4">
+                        <?php if ($studentToEdit): ?>
+                            <button type="submit" name="update" 
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
+                                Update Student
+                            </button>
+                            <a href="adminDashboard.php#students" 
+                               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                Cancel
+                            </a>
+                        <?php else: ?>
+                            <button type="submit" name="add" 
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
+                                Add Student
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+
+            <div id="sl" class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Student List</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Birth Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($students as $student): ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $student['id'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['email']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['sexe'] == 'homme' ? 'Male' : 'Female' ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['date_naissance'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['cin'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom_filiere']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="adminDashboard.php?edit=<?= $student['id'] ?>#students" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
+                                        <a href="adminDashboard.php?delete=<?= $student['id'] ?>#students" onclick="return confirm('Are you sure you want to delete this student?')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-            </form>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Student List</h2>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Birth Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <?php foreach ($students as $student): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $student['id'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['email']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['sexe'] == 'homme' ? 'Male' : 'Female' ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['date_naissance'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['cin'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom_filiere']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="adminDashboard.php#students?edit=<?= $student['id'] ?>" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
-                                    <a href="adminDashboard.php#students?delete=<?= $student['id'] ?>" onclick="return confirm('Are you sure you want to delete this student?')" class="text-red-600 hover:text-red-900">Delete</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
             </div>
-        </div>
         </section>
 
-
-
-
+        <!-- Grades Section -->
         <section id="grades">
-<h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage grades and subjects</h1>
-<div class="bg-white rounded-lg shadow-md p-6 mb-8">
-    <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
-        <?= $gradeToEdit ? 'Edit Grade' : 'Add New Grade' ?>
-    </h2>
+            <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage grades and subjects</h1>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
+                    <?= $gradeToEdit ? 'Edit Grade' : 'Add New Grade' ?>
+                </h2>
 
-    <form method="POST" class="space-y-4">
-        <?php if ($gradeToEdit): ?>
-            <input type="hidden" name="gradeid" value="<?= $gradeToEdit['id'] ?>">
-        <?php endif; ?>
+                <form method="POST" class="space-y-4">
+                    <?php if ($gradeToEdit): ?>
+                        <input type="hidden" name="gradeid" value="<?= $gradeToEdit['gradeid'] ?>">
+                    <?php endif; ?>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label for="studentid" class="block text-sm font-medium text-gray-700">Student ID</label>
-                <input type="number" id="studentid" name="studentid" required
-                       value="<?= $gradeToEdit ? $gradeToEdit['etudiant_id'] : '' ?>"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="studentid" class="block text-sm font-medium text-gray-700">Student ID</label>
+                            <input type="number" id="studentid" name="studentid" required
+                                   value="<?= $gradeToEdit ? $gradeToEdit['studentid'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="subjectid" class="block text-sm font-medium text-gray-700">Subject ID</label>
+                            <input type="number" id="subjectid" name="subjectid" required
+                                   value="<?= $gradeToEdit ? $gradeToEdit['subjectid'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="grade" class="block text-sm font-medium text-gray-700">Grade</label>
+                            <input type="number" id="grade" name="grade" step="0.01" min="0" max="20" required
+                                   value="<?= $gradeToEdit ? $gradeToEdit['grade'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 pt-4">
+                        <?php if ($gradeToEdit): ?>
+                            <button type="submit" name="updategrade"
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
+                                Update Grade
+                            </button>
+                            <a href="adminDashboard.php#grades"
+                               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                                Cancel
+                            </a>
+                        <?php else: ?>
+                            <button type="submit" name="addgrade"
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
+                                Add Grade
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
             </div>
-
-            <div class="space-y-2">
-                <label for="subjectid" class="block text-sm font-medium text-gray-700">Subject ID</label>
-                <input type="number" id="subjectid" name="subjectid" required
-                       value="<?= $gradeToEdit ? $gradeToEdit['matiere_id'] : '' ?>"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-            </div>
-
-            <div class="space-y-2">
-                <label for="grade" class="block text-sm font-medium text-gray-700">Grade</label>
-                <input type="number" id="grade" name="grade" step="0.01" min="0" max="20" required
-                       value="<?= $gradeToEdit ? $gradeToEdit['note'] : '' ?>"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-4 pt-4">
-            <?php if ($gradeToEdit): ?>
-                <button type="submit" name="updategrade"
-                        class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
-                    Update Grade
-                </button>
-                <a href="adminDashboard.php#grades"
-                   class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
-                    Cancel
-                </a>
-            <?php else: ?>
-                <button type="submit" name="addgrade"
-                        class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
-                    Add Grade
-                </button>
-            <?php endif; ?>
-        </div>
-    </form>
-</div>
-</section>
-        
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Grades List</h2>
             
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Program ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Subject ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Subject Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">coefficient</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student CIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grades</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <?php foreach ($grades as $grade): ?>
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $grade['fid'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($grade['nom_filiere']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($grade['mid']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['nom_matiere']  ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['coefficient'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['stid']  ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['nom']  ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['cin']  ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['note']  ?></td>
-                               
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="adminDashboard.php#gardes?editgrade=<?= $grade['nid'] ?>" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
-                                    <a href="adminDashboard.php#grades?deletegrade=<?= $grade['nid'] ?>" onclick="return confirm('Are you sure you want to delete this grade ?')" class="text-red-600 hover:text-red-900">Delete</a>
-                                </td>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Grades List</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coefficient</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student CIN</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($grades as $grade): ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $grade['fid'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($grade['nom_filiere']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['mid'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['nom_matiere'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['coefficient'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['stid'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['nom'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['cin'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['note'] ?></td>
+                                   
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="adminDashboard.php?editgrade=<?= $grade['nid'] ?>#grades" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
+                                        <a href="adminDashboard.php?deletegrade=<?= $grade['nid'] ?>#grades" onclick="return confirm('Are you sure you want to delete this grade?')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
         </section>
 
+        <!-- Timetable Section -->
+        <section id="tb">
+            <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage Timetable</h1>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
+                    <?= $timetableToEdit ? 'Edit Timetable Entry' : 'Add New Timetable Entry' ?>
+                </h2>
+                
+                <form method="POST" class="space-y-4">
+                    <?php if ($timetableToEdit): ?>
+                        <input type="hidden" name="timetable_id" value="<?= $timetableToEdit['timetable_id'] ?>">
+                    <?php endif; ?>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="filiere_id" class="block text-sm font-medium text-gray-700">Program:</label>
+                            <select id="filiere_id" name="filiere_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                <?php foreach ($filieres as $filiere): ?>
+                                    <option value="<?= $filiere['id'] ?>" 
+                                        <?= $timetableToEdit && $timetableToEdit['filiere_id'] == $filiere['id'] ? 'selected' : '' ?>>
+                                        <?= $filiere['nom_filiere'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="matiere_id" class="block text-sm font-medium text-gray-700">Subject:</label>
+                            <select id="matiere_id" name="matiere_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                <?php foreach ($subjects as $subject): ?>
+                                    <option value="<?= $subject['id'] ?>" 
+                                        <?= $timetableToEdit && $timetableToEdit['matiere_id'] == $subject['id'] ? 'selected' : '' ?>>
+                                        <?= $subject['nom_matiere'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="jour" class="block text-sm font-medium text-gray-700">Day:</label>
+                            <select id="jour" name="jour" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                <option value="Monday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Monday' ? 'selected' : '' ?>>Monday</option>
+                                <option value="Tuesday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Tuesday' ? 'selected' : '' ?>>Tuesday</option>
+                                <option value="Wednesday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Wednesday' ? 'selected' : '' ?>>Wednesday</option>
+                                <option value="Thursday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Thursday' ? 'selected' : '' ?>>Thursday</option>
+                                <option value="Friday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Friday' ? 'selected' : '' ?>>Friday</option>
+                                <option value="Saturday" <?= $timetableToEdit && $timetableToEdit['jour'] == 'Saturday' ? 'selected' : '' ?>>Saturday</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="heure_debut" class="block text-sm font-medium text-gray-700">Start Time:</label>
+                            <input type="time" id="heure_debut" name="heure_debut" required 
+                                   value="<?= $timetableToEdit ? $timetableToEdit['heure_debut'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="heure_fin" class="block text-sm font-medium text-gray-700">End Time:</label>
+                            <input type="time" id="heure_fin" name="heure_fin" required 
+                                   value="<?= $timetableToEdit ? $timetableToEdit['heure_fin'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="salle" class="block text-sm font-medium text-gray-700">Room:</label>
+                            <input type="text" id="salle" name="salle" required 
+                                   value="<?= $timetableToEdit ? $timetableToEdit['salle'] : '' ?>"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 pt-4">
+                        <?php if ($timetableToEdit): ?>
+                            <button type="submit" name="update_timetable" 
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
+                                Update Timetable
+                            </button>
+                            <a href="adminDashboard.php#tb" 
+                               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                                Cancel
+                            </a>
+                        <?php else: ?>
+                            <button type="submit" name="add_timetable" 
+                                    class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
+                                Add Timetable
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
 
-    <section id="tb">
-
-
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-[#F0A07D]  mb-8 text-center">Emploi du Temps</h1>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Timetable List</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-[#F0A07D]">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Program</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Day</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Time</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Subject</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Room</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($emploi_temps as $cours): ?>
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['filiere']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['jour']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <?= date('H:i', strtotime($cours['heure_debut'])) ?> - <?= date('H:i', strtotime($cours['heure_fin'])) ?>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['matiere']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['salle']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="adminDashboard.php?edittimetable=<?= $cours['id'] ?>#tb" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
+                                    <a href="adminDashboard.php?deletetimetable=<?= $cours['id'] ?>#tb" onclick="return confirm('Are you sure you want to delete this timetable entry?')" class="text-red-600 hover:text-red-900">Delete</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <section id="bulletins" class="mb-10">
+    <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage Bulletins</h1>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Generate Student Report</h2>
         
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-[#F0A07D] ">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Filière</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Jour</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Heure</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Matière</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Salle</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php foreach ($emploi_temps as $cours): ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['filiere']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['jour']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?= date('H:i', strtotime($cours['heure_debut'])) ?> - <?= date('H:i', strtotime($cours['heure_fin'])) ?>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['matiere']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['salle']) ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+        <form method="POST" action="../Backend/bulletin.php" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label for="student_id" class="block text-sm font-medium text-gray-700">Student ID:</label>
+                    <input type="number" id="student_id" name="student_id" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                </div>
+                
+                
+            </div>
+            
+            <div class="flex items-center space-x-4 pt-4">
+                <button type="submit" 
+                        class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
+                    Generate Bulletin
+                </button>
+                
+                <button type="button" onclick="showStudentList()"
+                        class="px-4 py-2 border border-[#F0A07D] text-[#F0A07D] rounded-md hover:bg-[#F0A07D] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+                  <a href="adminDashboard.php#sl">View Student List</a>  
+                </button>
+            </div>
+        </form>
     </div>
-    </section>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     </main>
 
@@ -696,43 +846,15 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
             new Chart(ctx1, {
                 type: 'line',
                 data: {
-                    labels: ['Computer Science', 'Cyber Security', 'Economics', 'Finance', 'Managmen', 'Marketing'],
+                    labels: ['Computer Science', 'Cyber Security', 'Economics', 'Finance', 'Management', 'Marketing'],
                     datasets: [{
-                        label: 'My First Dataset',
-                        data: [65, 59, 80, 81, 56, 55, 40],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(tooltipItem) {
-                                    return tooltipItem.raw + ' units';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Bar Chart
-            const ctx2 = document.getElementById('barchart').getContext('2d');
-            new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: ['Computer Science', 'Cyber Security', 'Economics', 'Finance', 'Managment', 'Marketing'],
-                    datasets: [{
-                        label: 'My First Dataset',
-                        data: [<?php echo $_SESSION["nbf2"]?>,<?php echo $_SESSION["nbf6"]?>,<?php echo $_SESSION["nbf7"]?>,
-                        <?php echo $_SESSION["nbf3"]?>,<?php echo $_SESSION["nbf1"]?>,<?php echo $_SESSION["nbf5"]?>],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
+                        label: 'Students by Program',
+                        data: [<?php echo $_SESSION["max_f2"]?>, <?php echo $_SESSION["max_f6"]?>, <?php echo $_SESSION["max_f7"]?>, 
+                               <?php echo $_SESSION["max_f3"]?>, <?php echo $_SESSION["max_f1"]?>, <?php echo $_SESSION["max_f5"]?>],
+                        borderColor: 'rgba(240, 160, 125, 1)',
+                        backgroundColor: 'rgba(240, 160, 125, 0.2)',
+                        tension: 0.1,
+                        fill: true
                     }]
                 },
                 options: {
@@ -746,63 +868,45 @@ $emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 }
                             }
                         }
-                    }
-                }
-            });
-
-            // Pie Chart
-            const ctx3 = document.getElementById('piechart').getContext('2d');
-            new Chart(ctx3, {
-                type: 'pie',
-                data: {
-                    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-                    datasets: [{
-                        label: 'My First Dataset',
-                        data: [65, 59, 80, 81, 56, 55, 40],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(tooltipItem) {
-                                    return tooltipItem.raw + ' units';
-                                }
-                            }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
                         }
                     }
                 }
             });
 
-            // Polar Area Chart
-            const ctx4 = document.getElementById('polarchart').getContext('2d');
-            new Chart(ctx4, {
-                type: 'polarArea',
+            // Bar Chart
+            const ctx2 = document.getElementById('barchart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
                 data: {
-                    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                    labels: ['Computer Science', 'Cyber Security', 'Economics', 'Finance', 'Management', 'Marketing'],
                     datasets: [{
-                        label: 'My First Dataset',
-                        data: [65, 59, 80, 81, 56, 55, 40],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1
+                        label: 'Students by Program',
+                        data: [<?php echo $_SESSION["nbf2"]?>, <?php echo $_SESSION["nbf6"]?>, <?php echo $_SESSION["nbf7"]?>, 
+                               <?php echo $_SESSION["nbf3"]?>, <?php echo $_SESSION["nbf1"]?>, <?php echo $_SESSION["nbf5"]?>],
+                        backgroundColor: 'rgba(240, 160, 125, 0.7)',
+                        borderColor: 'rgba(240, 160, 125, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { position: 'top' },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(tooltipItem) {
-                                    return tooltipItem.raw + ' units';
+                                    return tooltipItem.raw + ' students';
                                 }
                             }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
                         }
                     }
                 }
