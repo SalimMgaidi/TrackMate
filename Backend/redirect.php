@@ -1,26 +1,25 @@
 <?php
 session_start();
-include 'connection.php'; // assumes $pdo is your PDO instance
+include 'connection.php'; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
- 
 
-    // Prepare and execute
-    $stmt = $pdo->prepare("SELECT  * FROM utilisateur WHERE email = :email");
+    $stmt = $pdo->prepare("SELECT * FROM utilisateur WHERE email = :email");
     $stmt->bindParam(':email', $email);
     $stmt->execute();
 
-    // Fetch user
     $user = $stmt->fetch();
-   
-    
+
     if ($user) {
-        // Replace with password_verify() if you use hashed passwords
-        if ($user["mot_de_passe"] == $password) {
+        if (password_verify($password, $user["mot_de_passe"])) {
             $_SESSION['user'] = $user;
             $_SESSION['role'] = $user['role_id'];
+
+            // Set cookies - expires in 7 days
+            setcookie('user_email', $email, time() + (7 * 24 * 60 * 60), "/");
+            setcookie('session_id', session_id(), time() + (7 * 24 * 60 * 60), "/");
 
             // Redirect based on role
             if ($user['role_id'] == 1) {
@@ -42,5 +41,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 }
-
 ?>

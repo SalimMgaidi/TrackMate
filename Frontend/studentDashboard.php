@@ -1,9 +1,15 @@
 <?php
-session_start();
-if (!isset($_SESSION['user']) || $_SESSION['role'] != 0) {
-    header('Location: login.php');
-    exit();
-}
+    session_start();
+    if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+      $_SESSION = array();
+      session_destroy();
+      header("Location: index.php");
+      exit();
+  }
+  if (!isset($_SESSION['user'])) {
+      header("Location: login.php");
+      exit();
+  }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,7 +65,7 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] != 0) {
   <main class="flex-1 p-10 space-y-12">
     <header class="flex justify-between items-center">
       <h1 class="text-3xl font-bold">Student Dashboard</h1>
-      <button class="bg-[#F0A07D] text-white px-5 py-2 rounded-full hover:bg-[#d88b6c] transition">Logout</button>
+      <button class="bg-[#F0A07D] text-white px-5 py-2 rounded-full hover:bg-[#d88b6c] transition"><a href="studentDashboard.php?action=logout">Logout</a></button>
     </header>
 
     <section id="profile">
@@ -81,7 +87,6 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] != 0) {
         </div>
       </div>
     </section>
-
     <section id="statistics">
       <h2 class="text-2xl font-bold mb-4">Statistics</h2>
       <div class="grid md:grid-cols-2 gap-6">
@@ -97,78 +102,139 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] != 0) {
     </section>
 
     <section id="timetable">
-      <h2 class="text-2xl font-bold mb-4">Weekly Timetable</h2>
-      <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-        <table class="w-full text-sm border-collapse">
-          <thead class="bg-gray-100 text-left">
-            <tr>
-              <th class="p-3 border">Time</th>
-              <th class="p-3 border">Monday</th>
-              <th class="p-3 border">Tuesday</th>
-              <th class="p-3 border">Wednesday</th>
-              <th class="p-3 border">Thursday</th>
-              <th class="p-3 border">Friday</th>
-            </tr>
-          </thead>
-          <tbody>
-          <?php
-                $times = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00"];
-                foreach ($times as $time) {
-                        $nextHour = str_pad((intval(substr($time, 0, 2)) + 1), 2, "0", STR_PAD_LEFT) . ":00";
-                         echo "<tr>";
-                        echo "<td class='p-3 border'>{$time} - {$nextHour}</td>";
-                        for ($i = 0; $i < 5; $i++) {
-                             echo "<td class='p-3 border empty-slot'>-</td>";
-                        }
-                        echo "</tr>";
-                }?>
-           </tbody>
-        </table>
-      </div>
-    </section>
+  <h2 class="text-2xl font-bold mb-4">Weekly Timetable</h2>
+  <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead class="bg-gray-100 text-left">
+        <tr>
+          <th class="p-3 border">Time</th>
+          <th class="p-3 border">Monday</th>
+          <th class="p-3 border">Tuesday</th>
+          <th class="p-3 border">Wednesday</th>
+          <th class="p-3 border">Thursday</th>
+          <th class="p-3 border">Friday</th>
+        </tr>
+      </thead>
+      <tbody>
+      <?php
+        require_once '../Backend/connection.php';
+        $filiere_id = $_SESSION['student_info']['filiere_id'] ?? null;
+        
+        if($filiere_id) {
+            $stmt = $pdo->prepare("
+                SELECT jour, heure_debut, heure_fin, salle, m.nom_matiere 
+                FROM emploi_temps et
+                JOIN matieres m ON et.matiere_id = m.id
+                WHERE filiere_id = ?
+                ORDER BY heure_debut
+            ");
+            $stmt->execute([$filiere_id]);
+            $timetableData = $stmt->fetchAll(PDO::FETCH_GROUP);
+            
+            $timeSlots = [
+                '08:00:00' => '08:00 - 09:00',
+                '09:00:00' => '09:00 - 10:00',
+                '10:00:00' => '10:00 - 11:00',
+                '11:00:00' => '11:00 - 12:00',
+                '12:00:00' => '12:00 - 13:00',
+                '13:00:00' => '13:00 - 14:00',
+                '14:00:00' => '14:00 - 15:00',
+                '15:00:00' => '15:00 - 16:00'
+            ];
 
-    <section id="grades">
-      <h2 class="text-2xl font-bold mb-4">Academic Grades</h2>
-      <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-        <table class="w-full text-sm border-collapse">
-          <thead class="bg-gray-100 text-left">
-            <tr>
-              <th class="p-3 border">Subject</th>
-              <th class="p-3 border">Grade</th>
-              <th class="p-3 border">Score</th>
-              <th class="p-3 border">Credits</th>
-              <th class="p-3 border">Status</th>
-              <th class="p-3 border">Semester</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="p-3 border">-</td>
-              <td class="p-3 border">-</td>
-              <td class="p-3 border">-</td>
-              <td class="p-3 border">-</td>
-              <td class="p-3 border">-</td>
-              <td class="p-3 border">-</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="flex justify-end mt-4">
-         <a href="grades/grades_report.pdf" download class="bg-[#F0A07D] text-white px-4 py-2 rounded hover:bg-[#d88b6c] transition text-sm">
-            Download Grades (PDF)
-        </a>
-    </div>>
-      <div class="bg-white p-6 rounded-xl shadow-md mt-6 flex justify-between items-center">
-        <div>
-          <h3 class="text-lg font-semibold">GPA Summary</h3>
-          <p>Total Credits Completed: <span class="font-bold">-</span></p>
-        </div>
-        <div class="text-right">
-          <p>Current GPA: <span class="font-bold">-</span></p>
-          <p>Major GPA: <span class="font-bold">-</span></p>
-        </div>
-      </div>
-    </section>
+            foreach ($timeSlots as $startTime => $timeLabel) {
+                echo "<tr>";
+                echo "<td class='p-3 border'>$timeLabel</td>";
+                
+                foreach (['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'] as $day) {
+                    $cellContent = '-';
+                    if(isset($timetableData[$day])) {
+                        foreach($timetableData[$day] as $course) {
+                            $courseStart = date('H:i:s', strtotime($course['heure_debut']));
+                            $courseEnd = date('H:i:s', strtotime($course['heure_fin']));
+                            
+                            if($courseStart === $startTime) {
+                                $cellContent = "
+                                    <div class='font-medium'>".htmlspecialchars($course['nom_matiere'])."</div>
+                                    <div class='text-sm text-gray-500'>".htmlspecialchars($course['salle'])."</div>
+                                    <div class='text-sm'>".date('H:i', strtotime($courseStart))." - ".date('H:i', strtotime($courseEnd))."</div>
+                                ";
+                                break;
+                            }
+                        }
+                    }
+                    echo "<td class='p-3 border'>".($cellContent === '-' ? "<div class='empty-slot'>-</div>" : $cellContent)."</td>";
+                }
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='6' class='p-3 text-center text-gray-500'>No timetable available</td></tr>";
+        }
+      ?>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section id="grades">
+  <h2 class="text-2xl font-bold mb-4">Academic Grades</h2>
+  <div class="bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+    <table class="w-full text-sm border-collapse">
+      <thead class="bg-gray-100 text-left">
+        <tr>
+          <th class="p-3 border">Subject</th>
+          <th class="p-3 border">Grade</th>
+          <th class="p-3 border">Score</th>
+          <th class="p-3 border">Credits</th>
+          <th class="p-3 border">Status</th>
+          <th class="p-3 border">Semester</th>
+        </tr>
+      </thead>
+      <tbody>
+      <?php
+        if(isset($_SESSION['student_info']['id'])) {
+            $etudiant_id = $_SESSION['student_info']['id'];
+            $stmt = $pdo->prepare("SELECT n.note, m.nom_matiere, m.credit, b.semestre 
+                FROM notes n
+                JOIN matieres m ON n.matiere_id = m.id
+                JOIN bulletins b ON n.etudiant_id = b.etudiant_id
+                WHERE n.etudiant_id = ?
+                ORDER BY b.semestre
+            ");
+            $stmt->execute([$etudiant_id]);
+            
+            if($stmt->rowCount() > 0) {
+                while($grade = $stmt->fetch()) {
+                    $gradeClass = 'grade-';
+                    if($grade['note'] >= 16) $gradeClass .= 'A';
+                    elseif($grade['note'] >= 14) $gradeClass .= 'B';
+                    elseif($grade['note'] >= 12) $gradeClass .= 'C';
+                    elseif($grade['note'] >= 10) $gradeClass .= 'D';
+                    else $gradeClass .= 'F';
+                    
+                    echo "
+                    <tr>
+                        <td class='p-3 border'>".htmlspecialchars($grade['nom_matiere'])."</td>
+                        <td class='p-3 border $gradeClass'>".htmlspecialchars($grade['note'])."/20</td>
+                        <td class='p-3 border'>".htmlspecialchars($grade['note'])."</td>
+                        <td class='p-3 border'>".htmlspecialchars($grade['credit'])."</td>
+                        <td class='p-3 border'>".($grade['note'] >= 10 ? 'Passed' : 'Failed')."</td>
+                        <td class='p-3 border'>".htmlspecialchars($grade['semestre'])."</td>
+                    </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='6' class='p-3 text-center text-gray-500'>No grades available</td></tr>";
+            }
+        }
+      ?>
+      </tbody>
+    </table>
+  </div>
+  <div class="flex justify-end mt-4">
+    <a href="grades/grades_report.pdf" download class="bg-[#F0A07D] text-white px-4 py-2 rounded hover:bg-[#d88b6c] transition text-sm">
+      Download Grades (PDF)
+    </a>
+  </div>
+</section>
   </main>
 
   <script>

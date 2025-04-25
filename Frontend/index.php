@@ -21,7 +21,7 @@
         <div class="text-gray-500 font-[poppins]">
             <ul class="flex space-x-9 font-medium">
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
-                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Courses</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="prog">Programs</a></li>
                 <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
                 <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a target="_blank" href="login.php">Login</a></li>
             </ul>
@@ -42,7 +42,7 @@
       <span class="text-[#3EAC60] font-bold text-xl hover:text-[#4be77c] ">secure</span>, and <span class="text-[#54BEC7] font-bold text-xl hover:text-[#40d6e4]">visualize</span> student notes and data effortlessly. Stay organized, 
         track progress, and gain valuable insights — all in one place. Empower your learning journey with a reliable and user-friendly platform designed to help you succeed</p>
     <img src="imgs/progressBar.png" alt="" class="w-[600px]">
-    <button class="w-64 h-16 bg-orange-300 text-white rounded-xl text-[25px] font-medium hover:scale-105 transition-transform duration-200 hover:bg-orange-400">Register Now</button>
+    <button class="w-64 h-16 bg-orange-300 text-white rounded-xl text-[25px] font-medium hover:scale-105 transition-transform duration-200 hover:bg-orange-400"><a href="registration.php">Register Now</a></button>
 </div>
 <div>
     <img src="imgs/mainPageImg.png" alt="" class="w-[1300px]">
@@ -50,10 +50,10 @@
         </div>
     </section>
     
-    <section class="py-12 bg-[#F0A07D]">
+    <section id="prog" class="py-12 bg-[#F0A07D] ">
     
         <div class="max-w-6xl mx-auto px-1">
-          <h2 class="text-7xl font-bold text-center mb-0.5  text-white font-[poppins] pt-5">Courses</h2>
+          <h2 class="text-7xl font-bold text-center mb-0.5  text-white font-[poppins] pt-5">Our Programs</h2>
           <p class="text-white font-[poppins] text-[15px] text-center p-8"><br><span class=" text-[45px] font-semibold">TrackMate is here to guide you every step of the way!</span> </p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Card 1 -->

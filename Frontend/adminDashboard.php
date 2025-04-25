@@ -11,7 +11,7 @@ $_SESSION["nbf3"] = $pdo->query("SELECT count(id) from etudiant where filiere_id
 $_SESSION["nbf1"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=1")->fetchColumn();
 $_SESSION["nbf5"] = $pdo->query("SELECT count(id) from etudiant where filiere_id=5")->fetchColumn();
 
-
+$gradeToEdit = null;
 
 
 
@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Handle delete action
-if (isset($_GET['delete'])) {
-    $user_id = $_GET['delete'];
+if (isset($_GET['deletegrade'])) {
+    $user_id = $_GET['deletegrade'];
     
     // First delete from etudiant table
     $stmt = $pdo->prepare("DELETE FROM etudiant WHERE user_id = ?");
@@ -60,7 +60,7 @@ if (isset($_GET['delete'])) {
     $stmt = $pdo->prepare("DELETE FROM utilisateur WHERE id = ?");
     $stmt->execute([$user_id]);
     
-    header("Location: adminDashboard.php#students?success=deleted");
+    header("Location: adminDashboard.php#grades?success=deleted");
     exit;
 }
 
@@ -94,63 +94,68 @@ if (isset($_GET['edit'])) {
 
 //-------------------------------------------------------manage subjects/grades-------------------------------------------------------------
 // Handle form submissions
+$gardeToEdit = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['add'])) {
-        // Add new student
-        $stmt = $pdo->prepare("INSERT INTO utilisateur (nom, email, mot_de_passe, role_id, sexe) VALUES (?, ?, ?, 0, ?)");
-        $stmt->execute([$_POST['nom'], $_POST['email'], password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT), $_POST['sexe']]);
+    if (isset($_POST['addgrade'])) {
+        // Add new garde
+        $stmt = $pdo->prepare("INSERT INTO notes (etudiant_id ,matiere_id,note) VALUES (?, ?, ?)");
+        $stmt->execute([
+            $_POST['studentid'],
+            $_POST['subjectid'],
+            $_POST['grade']
+        ]);
         
-        $user_id = $pdo->lastInsertId();
-        
-        $stmt = $pdo->prepare("INSERT INTO etudiant (user_id, date_naissance, filiere_id, cin) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $_POST['date_naissance'], $_POST['filiere_id'], $_POST['cin']]);
+   
+       
         
         header("Location: adminDashboard.php?success=added");
         exit;
-    } elseif (isset($_POST['update'])) {
-        // Update student
-        $stmt = $pdo->prepare("UPDATE utilisateur SET nom = ?, email = ?, sexe = ? WHERE id = ?");
-        $stmt->execute([$_POST['nom'], $_POST['email'], $_POST['sexe'], $_POST['user_id']]);
-        
-        $stmt = $pdo->prepare("UPDATE etudiant SET date_naissance = ?, filiere_id = ?, cin = ? WHERE user_id = ?");
-        $stmt->execute([$_POST['date_naissance'], $_POST['filiere_id'], $_POST['cin'], $_POST['user_id']]);
-        
-        header("Location: adminDashboard.php#students?success=updated");
+    }}
+    if (isset($_POST['editgrade'])) {
+        $stmt = $pdo->prepare("UPDATE notes SET etudiant_id = ?, matiere_id = ?, note = ? WHERE id = ?");
+        $stmt->execute([$_POST['studentid'], $_POST['subjectid'], $_POST['grade'], $_POST['gradeid']]);
+        header("Location: adminDashboard.php?success=grade_updated#grades");
         exit;
     }
-}
+
 
 // Handle delete action
-if (isset($_GET['delete'])) {
-    $user_id = $_GET['delete'];
-    
-    // First delete from etudiant table
-    $stmt = $pdo->prepare("DELETE FROM etudiant WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    
-    // Then delete from utilisateur table
-    $stmt = $pdo->prepare("DELETE FROM utilisateur WHERE id = ?");
-    $stmt->execute([$user_id]);
-    
-    header("Location: adminDashboard.php#students?success=deleted");
+if (isset($_GET['deletegrade'])) {
+    $grade_id = $_GET['deletegrade'];
+
+    $stmt = $pdo->prepare("DELETE FROM notes WHERE id = ?");
+    $stmt->execute([$grade_id]);
+
+    // Redirect with success message
+    header("Location: adminDashboard.php?success=grade_deleted#grades");
     exit;
 }
-
 // Get all students with their filiere information
+$gardes=[];
 $stmt = $pdo->query("
-    SELECT u.id, u.nom, u.email, u.sexe, e.date_naissance, e.cin, f.nom_filiere 
-    FROM utilisateur u
-    JOIN etudiant e ON u.id = e.user_id
-    JOIN filieres f ON e.filiere_id = f.id
-    WHERE u.role_id = 0
+    SELECT 
+        f.id AS fid,
+        n.id as nid,
+        f.nom_filiere,
+        m.id AS mid,
+        m.nom_matiere,
+        m.coefficient,
+        e.id AS stid,
+        u.nom,
+        e.cin,
+        n.note
+    FROM utilisateur u, matieres m, notes n, etudiant e, filieres f
+    WHERE n.matiere_id = m.id 
+        AND n.etudiant_id = e.id 
+        AND e.user_id = u.id 
+        AND e.filiere_id = f.id 
+        AND u.role_id = 0
 ");
-$students = $stmt->fetchAll();
+$grades = $stmt->fetchAll();
 
-// Get all filieres for dropdown
-$filieres = $pdo->query("SELECT id, nom_filiere FROM filieres")->fetchAll();
 
 // Get specific student for editing
-$studentToEdit = null;
+
 if (isset($_GET['edit'])) {
     $stmt = $pdo->prepare("
         SELECT u.id as user_id, u.nom, u.email, u.sexe, e.id as etudiant_id, e.date_naissance, e.filiere_id, e.cin 
@@ -159,9 +164,31 @@ if (isset($_GET['edit'])) {
         WHERE u.id = ?
     ");
     $stmt->execute([$_GET['edit']]);
-    $studentToEdit = $stmt->fetch();
+    $gardetToEdit = $stmt->fetch();
 }
 //-------------------------------------------------------manage subjects/grades-------------------------------------------------------------
+//-------------------------------------------------------logout-------------------------------------------------------------
+if (isset($_GET["logout"]) && $_GET["logout"] == "true") {
+    
+    session_start();
+    session_destroy(); 
+    header("Location: index.php"); 
+    exit(); 
+}
+//-------------------------------------------------------logout-------------------------------------------------------------
+//-------------------------------------------------------timetable-------------------------------------------------------------
+
+//  get emploi temps 
+$sql = "SELECT et.id, f.nom_filiere AS filiere, m.nom_matiere AS matiere, 
+et.jour, et.heure_debut, et.heure_fin, et.salle
+FROM emploi_temps et
+JOIN filieres f ON et.filiere_id = f.id
+JOIN matieres m ON et.matiere_id = m.id
+ORDER BY et.jour, et.heure_debut";
+
+$stmt = $pdo->query($sql);
+$emploi_temps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+//-------------------------------------------------------timetable-------------------------------------------------------------
 ?>
 
 <!DOCTYPE html>
@@ -192,10 +219,10 @@ if (isset($_GET['edit'])) {
                         <img src="imgs/logo.png" class="w-6" alt="">
                         <h3 class="font-[poppins]"><span class="text-[#F0A07D] font-semibold">T</span>rack<span class="text-[#F0A07D] font-semibold">M</span>ate</h3>
                     </div>
-                    <li class="mb-2"><a href="#statistics" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Statistics</a></li>
+                    <li class="mb-2"><a href="#stat" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Statistics</a></li>
                     <li class="mb-2"><a href="#students" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Manage Students</a></li>
-                    <li class="mb-2"><a href="#subjects" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Manage Subjects/grades</a></li>
-                    <li class="mb-2"><a href="#grades" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Time Table</a></li>
+                    <li class="mb-2"><a href="#grades" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Manage Subjects/grades</a></li>
+                    <li class="mb-2"><a href="#tb" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Time Table</a></li>
                     <li class="mb-2"><a href="#bulletins" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black">Manage Bulletins</a></li>
                     <li class="mb-2"><a href="#settings" class="block p-2 hover:bg-gray-200 rounded hover:scale-105 transition-transform duration-800 hover:text-black"> <button id="settings-btn">Settings</button></a></li>
                 </ul>
@@ -248,16 +275,16 @@ if (isset($_GET['edit'])) {
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 p-10 bg-[#FCF4F0] pl-10 ml-64">
+    <main id="stat" class="flex-1 p-10 bg-[#FCF4F0] pl-10 ml-64">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold">Dashboard</h1>
             <div class="flex gap-4">
-                <button class="bg-[#F0A07D] text-white px-4 py-2 rounded-3xl hover:bg-[#d88b6c]">Logout</button>
+                <a href="adminDashboard.php?logout=true" class="bg-[#F0A07D] text-white px-4 py-2 rounded-3xl hover:bg-[#d88b6c]">Logout</a>
             </div>
         </header>
 
         <!-- Statistics Section -->
-        <section id="statistics" class="mb-10">
+        <section  class="mb-10">
             <h2 class="text-2xl font-bold mb-5">Statistics</h2>
             <div class="grid grid-cols-3 gap-4 mb-8">
                 <div class="bg-white p-5 rounded-lg shadow-lg">
@@ -433,93 +460,97 @@ if (isset($_GET['edit'])) {
 
 
 
-        <section id="students">
-    <h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage grades and subjects</h1>
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
-                <?= $gradeToEdit ? 'Edit Grade' : 'Add New Grade' ?>
-            </h2>
-            
-            <form method="POST" class="space-y-4">
-                <?php if ($studentToEdit): ?>
-                    <input type="hidden" name="student_id" value="<?= $gradeToEdit['user_id'] ?>">
-                <?php endif; ?>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label for="nom" class="block text-sm font-medium text-gray-700">Full Name:</label>
-                        <input type="text" id="nom" name="nom" required 
-                               value="<?= $studentToEdit ? $studentToEdit['nom'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
-                        <input type="email" id="email" name="email" required 
-                               value="<?= $studentToEdit ? $studentToEdit['email'] : '' ?>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    
-                    <?php if (!$studentToEdit): ?>
-                    <div class="space-y-2">
-                        <label for="mot_de_passe" class="block text-sm font-medium text-gray-700">Password:</label>
-                        <input type="password" id="mot_de_passe" name="mot_de_passe" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                    </div>
-                    <?php endif; ?>
-                    
-                    
-                    
-                    <
-                
-                <div class="flex items-center space-x-4 pt-4">
-                    <?php if ($studentToEdit): ?>
-                        <button type="submit" name="update" 
-                                class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
-                            Update Student
-                        </button>
-                        <a href="adminDashboard.php" 
-                           class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
-                            Cancel
-                        </a>
-                    <?php else: ?>
-                        <button type="submit" name="add" 
-                                class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d] focus:outline-none focus:ring-2 focus:ring-[#F0A07D] focus:ring-offset-2">
-                            Add Student
-                        </button>
-                    <?php endif; ?>
-                </div>
-            </form>
+        <section id="grades">
+<h1 class="text-3xl p-5 text-[#F0A07D] font-[poppins] font-bold">Manage grades and subjects</h1>
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">
+        <?= $gradeToEdit ? 'Edit Grade' : 'Add New Grade' ?>
+    </h2>
+
+    <form method="POST" class="space-y-4">
+        <?php if ($gradeToEdit): ?>
+            <input type="hidden" name="gradeid" value="<?= $gradeToEdit['id'] ?>">
+        <?php endif; ?>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label for="studentid" class="block text-sm font-medium text-gray-700">Student ID</label>
+                <input type="number" id="studentid" name="studentid" required
+                       value="<?= $gradeToEdit ? $gradeToEdit['etudiant_id'] : '' ?>"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+            </div>
+
+            <div class="space-y-2">
+                <label for="subjectid" class="block text-sm font-medium text-gray-700">Subject ID</label>
+                <input type="number" id="subjectid" name="subjectid" required
+                       value="<?= $gradeToEdit ? $gradeToEdit['matiere_id'] : '' ?>"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+            </div>
+
+            <div class="space-y-2">
+                <label for="grade" class="block text-sm font-medium text-gray-700">Grade</label>
+                <input type="number" id="grade" name="grade" step="0.01" min="0" max="20" required
+                       value="<?= $gradeToEdit ? $gradeToEdit['note'] : '' ?>"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#F0A07D]">
+            </div>
         </div>
 
+        <div class="flex items-center space-x-4 pt-4">
+            <?php if ($gradeToEdit): ?>
+                <button type="submit" name="updategrade"
+                        class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
+                    Update Grade
+                </button>
+                <a href="adminDashboard.php#grades"
+                   class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                    Cancel
+                </a>
+            <?php else: ?>
+                <button type="submit" name="addgrade"
+                        class="px-4 py-2 bg-[#F0A07D] text-white rounded-md hover:bg-[#e0906d]">
+                    Add Grade
+                </button>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+</section>
+        
         <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Student List</h2>
+            <h2 class="text-2xl font-bold text-[#F0A07D] mb-6">Grades List</h2>
             
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CIN</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Program ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Subject ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> Subject Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">coefficient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student CIN</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grades</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <?php foreach ($students as $student): ?>
+                        <?php foreach ($grades as $grade): ?>
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $student['id'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['email']) ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['sexe'] == 'homme' ? 'Male' : 'Female' ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['date_naissance'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $student['cin'] ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($student['nom_filiere']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $grade['fid'] ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($grade['nom_filiere']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($grade['mid']) ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['nom_matiere']  ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $grade['coefficient'] ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['stid']  ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['nom']  ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['cin']  ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?=  $grade['note']  ?></td>
+                               
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="adminDashboard.php#students?edit=<?= $student['id'] ?>" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
-                                    <a href="adminDashboard.php#students?delete=<?= $student['id'] ?>" onclick="return confirm('Are you sure you want to delete this student?')" class="text-red-600 hover:text-red-900">Delete</a>
+                                    <a href="adminDashboard.php#gardes?editgrade=<?= $grade['nid'] ?>" class="text-[#F0A07D] hover:text-[#e0906d] mr-3">Edit</a>
+                                    <a href="adminDashboard.php#grades?deletegrade=<?= $grade['nid'] ?>" onclick="return confirm('Are you sure you want to delete this grade ?')" class="text-red-600 hover:text-red-900">Delete</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -530,7 +561,40 @@ if (isset($_GET['edit'])) {
         </section>
 
 
-    
+    <section id="tb">
+
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-[#F0A07D]  mb-8 text-center">Emploi du Temps</h1>
+        
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-[#F0A07D] ">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Filière</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Jour</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Heure</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Matière</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Salle</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <?php foreach ($emploi_temps as $cours): ?>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['filiere']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['jour']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <?= date('H:i', strtotime($cours['heure_debut'])) ?> - <?= date('H:i', strtotime($cours['heure_fin'])) ?>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['matiere']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($cours['salle']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </section>
 
 
 
