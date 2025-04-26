@@ -248,6 +248,80 @@ if (isset($_GET["logout"]) && $_GET["logout"] == "true") {
     exit(); 
 }
 //-------------------------------------------------------logout-------------------------------------------------------------
+//-------------------------------------------------------profile-update-------------------------------------------------------------
+
+
+
+require("../Backend/connection.php");
+
+// Get current user data
+$user_id = $_SESSION['user']['id'];
+$stmt = $pdo->prepare("SELECT * FROM utilisateur WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Handle form submission
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateprof'])) {
+    // Get form data
+    $name = trim($_POST['name'] ?? $user['nom']);
+    $email = trim($_POST['email'] ?? $user['email']);
+    $password = $_POST['password'] ?? '';
+    
+    // Validate inputs
+    if (empty($name)) {
+        $error = "Name cannot be empty";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email format";
+    } else {
+        // Check if email exists (excluding current user)
+        $stmt = $pdo->prepare("SELECT id FROM utilisateur WHERE email = ? AND id != ?");
+        $stmt->execute([$email, $user_id]);
+        
+        if ($stmt->rowCount() > 0) {
+            $error = "Email already in use by another account";
+        } else {
+            try {
+                $pdo->beginTransaction();
+                
+                // Prepare update query based on whether password was changed
+                if (!empty($password)) {
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    $stmt = $pdo->prepare("UPDATE utilisateur SET nom = :name, email = :email, mot_de_passe = :password WHERE id = :id");
+                    $stmt->execute([
+                        ':name' => $name,
+                        ':email' => $email,
+                        ':password' => $hashed_password,
+                        ':id' => $user_id
+                    ]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE utilisateur SET nom = :name, email = :email WHERE id = :id");
+                    $stmt->execute([
+                        ':name' => $name,
+                        ':email' => $email,
+                        ':id' => $user_id
+                    ]);
+                }
+                
+                $pdo->commit();
+                $success = "Profile updated successfully!";
+                // Update session data
+                $_SESSION['user']['nom'] = $name;
+                $_SESSION['user']['email'] = $email;
+                // Refresh user data
+                $user['nom'] = $name;
+                $user['email'] = $email;
+                
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                $error = "Error updating profile: " . $e->getMessage();
+            }
+        }
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -310,10 +384,10 @@ if (isset($_GET["logout"]) && $_GET["logout"] == "true") {
                         </div>
                         <!-- Profile Form -->
                         <form id="profile-form" class="flex flex-col space-y-3 w-full max-w-xs mt-4 md:mt-16 mx-auto">
-                            <input type="text" placeholder="Update Name" class="w-full p-3 border rounded-md">
-                            <input type="email" placeholder="Update Email" class="w-full p-3 border rounded-md">
-                            <input type="password" placeholder="Update Password" class="w-full p-3 border rounded-md">
-                            <button type="submit" class="bg-[#F0A07D] w-full py-3 rounded-lg hover:bg-[#d88b6c]">Save</button>
+                            <input name="name" type="text" placeholder="Update Name" class="w-full p-3 border rounded-md">
+                            <input name="email" type="email" placeholder="Update Email" class="w-full p-3 border rounded-md">
+                            <input name="password" type="password" placeholder="Update Password" class="w-full p-3 border rounded-md">
+                            <button type="submit" class="bg-[#F0A07D] w-full py-3 rounded-lg hover:bg-[#d88b6c]" name="updaterof">Save</button>
                         </form>
                     </div>
                     <button id="back-from-profile" class="text-[#F0A07D] mt-4 text"><i class="fa-solid fa-arrow-left" style="color: #e39a1c;"><-</i></button>

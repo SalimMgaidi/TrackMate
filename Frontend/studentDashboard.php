@@ -121,8 +121,7 @@
         $filiere_id = $_SESSION['student_info']['filiere_id'] ?? null;
         
         if($filiere_id) {
-            $stmt = $pdo->prepare("
-                SELECT jour, heure_debut, heure_fin, salle, m.nom_matiere 
+            $stmt = $pdo->prepare("SELECT jour, heure_debut, heure_fin, salle, m.nom_matiere 
                 FROM emploi_temps et
                 JOIN matieres m ON et.matiere_id = m.id
                 WHERE filiere_id = ?
@@ -131,8 +130,7 @@
             $stmt->execute([$filiere_id]);
             $timetableData = $stmt->fetchAll(PDO::FETCH_GROUP);
             
-            $timeSlots = [
-                '08:00:00' => '08:00 - 09:00',
+            $timeSlots = ['08:00:00' => '08:00 - 09:00',
                 '09:00:00' => '09:00 - 10:00',
                 '10:00:00' => '10:00 - 11:00',
                 '11:00:00' => '11:00 - 12:00',
@@ -230,7 +228,7 @@
     </table>
   </div>
   <div class="flex justify-end mt-4">
-    <a href="grades/grades_report.pdf" download class="bg-[#F0A07D] text-white px-4 py-2 rounded hover:bg-[#d88b6c] transition text-sm">
+    <a href="../Backend/studentBulletin.php" download class="bg-[#F0A07D] text-white px-4 py-2 rounded hover:bg-[#d88b6c] transition text-sm">
       Download Grades (PDF)
     </a>
   </div>

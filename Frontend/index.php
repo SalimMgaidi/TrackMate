@@ -20,9 +20,9 @@
 
         <div class="text-gray-500 font-[poppins]">
             <ul class="flex space-x-9 font-medium">
-                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">Home</a></li>
-                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="prog">Programs</a></li>
-                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="">About</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="index.php">Home</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="#prog">Programs</a></li>
+                <li class="hover:scale-105 transition-transform duration-200 hover:text-black"><a href="#conc">About</a></li>
                 <li class="text-orange-300 rounded-md hover:font-semibold  hover:scale-105 transition-transform duration-200 hover:text-orange-500"><a target="_blank" href="login.php">Login</a></li>
             </ul>
         </div>
@@ -141,7 +141,7 @@
 
  
   <!-- Compact Contact Section -->
-<div class="bg-[#F0A07D] p-3 rounded-4xl  font-[Poppins] text-xs h-[400px]  w-[400px] ">
+<div class="bg-[#F0A07D] p-3 rounded-4xl  font-[Poppins] text-xs h-[400px]  w-[400px] " id="conc">
   <h3 class="text-[42px] p-10 font-semibold mb-2 text-center text-white">Contact Us</h3>
   <p class="text-xs mb-3 text-center text-[12px] text-white">
     Reach out to us with any questions or feedback.
